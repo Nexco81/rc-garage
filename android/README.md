@@ -25,3 +25,31 @@ Nouvelle application Android indépendante de l'application web historique.
 7. Ajouter l'authentification et la synchronisation Firebase, puis la distribution APK.
 
 Le cahier des charges PDF validé le 07/11/2026 est la référence fonctionnelle. Ne jamais committer des sauvegardes personnelles, clés Firebase, keystores ou fichiers de configuration secrets.
+
+## Projet initial (tâche #1)
+
+Ouvrir `android/` dans Android Studio. Prérequis : JDK 17 (ou JDK 21),
+SDK Android 35 et Build Tools 35.0.0. Le wrapper utilise Gradle 8.11.1
+avec vérification SHA-256, AGP 8.9.2 et Kotlin/Compose Compiler 2.1.20.
+Configurer `ANDROID_HOME` ou le fichier ignoré `local.properties` avec `sdk.dir`.
+
+Depuis `android/` :
+
+```sh
+./gradlew :app:assembleDebug
+./gradlew :app:testDebugUnitTest :app:lintDebug
+./gradlew :app:assembleDebugAndroidTest
+# Nécessite un appareil ou émulateur Android API 31 minimum :
+./gradlew :app:connectedDebugAndroidTest
+```
+
+L'APK se trouve dans `app/build/outputs/apk/debug/app-debug.apk`.
+L'accueil est autonome et fonctionne sans connexion ni configuration Firebase.
+Le bouton « Apparence » ouvre les choix système, clair et sombre ; le choix est
+conservé localement entre les lancements. Aucun inventaire de démonstration
+ni donnée personnelle n'est embarqué. Room est seulement une dépendance à ce stade ;
+les entités, migrations, repositories et modules métier arrivent dans les lots suivants.
+
+La CI `.github/workflows/android.yml` compile l'APK et les tests instrumentés,
+exécute les tests JVM et lint, sans secret ni publication. Les tests instrumentés
+sont compilés en CI mais doivent être exécutés sur appareil/émulateur séparément.

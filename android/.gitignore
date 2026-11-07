@@ -1,5 +1,6 @@
 # Android local and secrets
 .gradle/
+.kotlin/
 **/build/
 local.properties
 *.iml
