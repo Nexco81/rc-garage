@@ -7,6 +7,9 @@ let db;try{db=JSON.parse(localStorage.getItem(K))||{models:seed,gear:[]}}catch{d
 if(!Array.isArray(db.models)||!Array.isArray(db.gear))db={models:seed,gear:[]};
 function migrateBodies(){if(!Array.isArray(db.bodyStock))db.bodyStock=[];db.models.forEach(m=>{if(!Array.isArray(m.bodies))m.bodies=[];if(!Array.isArray(m.bodyIds))m.bodyIds=[];for(const b of m.bodies){const v=typeof b==='string'?{name:b}:b;if(!v||!Object.values(v).some(Boolean))continue;const id='legacy-body-'+m.id+'-'+db.bodyStock.length;db.bodyStock.push({id,name:v.name||'',brand:v.brand||'',reference:v.reference||'',decoration:v.decoration||'',condition:v.condition||'',photo:v.photo||'',compatible:v.compatible||'',modelId:m.id});m.bodyIds.push(id)}m.bodies=[];if(!m.boxBody)m.boxBody={enabled:true,brand:'',model:m.model||''}})}
 migrateBodies();
+function applyKitDefaults(){if((db.kitDefaultsVersion||0)>=1)return;db.models.forEach(m=>{if(!m.boxBody)m.boxBody={enabled:true,brand:'',model:m.model||''};else{m.boxBody.enabled=true;if(!String(m.boxBody.model||'').trim())m.boxBody.model=m.model||''}});db.kitDefaultsVersion=1}
+applyKitDefaults();
+try{localStorage.setItem(K,JSON.stringify(db))}catch{}
 db.models.forEach(m=>{if(!Array.isArray(m.bodies))m.bodies=[];if(!m.usage)m.usage='À définir';if(m.memory==null)m.memory=''});
 db.gear.forEach(g=>{if(g.type==='Récepteur'&&!g.radioId)g.radioId='';if(!g.inventoryId)g.inventoryId=''});
 let tab='models',editing=null;
@@ -121,6 +124,6 @@ db.bodyStock.forEach(b=>{const m=bodyOwner(b);rows.push(['Carrosserie',b.brand,b
 downloadCsv('rc-garage-export-excel.csv',rows)
 };
 $('importBtn').onclick=()=>$('importFile').click();
-$('importFile').onchange=async ev=>{try{const d=JSON.parse(await ev.target.files[0].text());if(!Array.isArray(d.models)||!Array.isArray(d.gear))throw Error('Format incorrect');if(confirm('Remplacer les données actuelles ?')){db=d;migrateBodies();db.models.forEach(m=>{if(!Array.isArray(m.bodies))m.bodies=[];if(!m.usage)m.usage='À définir';if(m.memory==null)m.memory=''});saveDb();render()}}catch(err){alert(err.message)}ev.target.value=''};
+$('importFile').onchange=async ev=>{try{const d=JSON.parse(await ev.target.files[0].text());if(!Array.isArray(d.models)||!Array.isArray(d.gear))throw Error('Format incorrect');if(confirm('Remplacer les données actuelles ?')){db=d;migrateBodies();applyKitDefaults();db.models.forEach(m=>{if(!Array.isArray(m.bodies))m.bodies=[];if(!m.usage)m.usage='À définir';if(m.memory==null)m.memory=''});saveDb();render()}}catch(err){alert(err.message)}ev.target.value=''};
 render();
 </script></body></html>
