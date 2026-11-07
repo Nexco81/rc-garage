@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 31/108 inset per side leaves a 46 dp square inside the 66 dp safe-zone circle. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetLeft="28.703704%"
+    android:insetTop="28.703704%"
+    android:insetRight="28.703704%"
+    android:insetBottom="28.703704%">
+    <bitmap android:src="@drawable/rc_garage_icon_artwork"
+        android:gravity="fill" android:filter="true" />
+</inset>
