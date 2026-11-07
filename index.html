@@ -68,7 +68,7 @@ h+=field('inventoryId','Identifiant / lot (facultatif)',x.inventoryId);h+=field(
 h+=field('radioId','Radio associée (pour un récepteur)',x.radioId||'',[['','Aucune radio'],...db.gear.filter(g=>g.type==='Radio').map(g=>[g.id,gName(g.id)])]);
 h+=field('notes','Notes',x.notes);
 }else{
-for(const [k,l] of [['brand','Marque'],['name','Modèle / nom'],['reference','Référence'],['decoration','Décoration'],['condition','État'],['photo','URL photo'],['compatible','Châssis compatibles']])h+=field(k,l,x[k]);
+for(const [k,l] of [['brand','Marque'],['name','Modèle / nom'],['reference','Référence'],['decoration','Décoration']])h+=field(k,l,x[k]);h+=field('condition','État',x.condition||'',[['','Non renseigné'],...['A peindre','Exposition','Neuve','Utilisée','Très usée','Poubelle','Vendue'].map(v=>[v,v]),...((x.condition&&!['A peindre','Exposition','Neuve','Utilisée','Très usée','Poubelle','Vendue'].includes(x.condition))?[[x.condition,x.condition+' (ancien état)']]:[])]);for(const [k,l] of [['photo','URL photo'],['compatible','Châssis compatibles']])h+=field(k,l,x[k]);
 h+=field('notes','Notes',x.notes);
 }
 $('fields').innerHTML=h;if(tab==='models'){$('addBodyLink').onclick=()=>{$('bodyLinks').insertAdjacentHTML('beforeend',bodySelectRow('',x));wireBodyLinks()};wireBodyLinks()}$('error').textContent='';$('delete').classList.toggle('hidden',!id);$('editor').classList.remove('hidden');$('editor').scrollIntoView({behavior:'smooth'});
