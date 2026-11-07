@@ -8,7 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Database(entities = [Vehicle::class, Equipment::class, EquipmentUnit::class,
     EquipmentAssignment::class, RadioMemory::class, BodyShell::class, Battery::class,
     BatteryCompatibility::class, VehiclePhoto::class, Sale::class, SaleLine::class,
-    StockMovement::class, SyncChange::class, ImportSource::class], version = 2, exportSchema = true)
+    StockMovement::class, SyncChange::class, ImportSource::class], version = 3, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class GarageDatabase : RoomDatabase() {
     abstract fun garage(): GarageDao
@@ -16,13 +16,24 @@ abstract class GarageDatabase : RoomDatabase() {
         @Volatile private var instance: GarageDatabase? = null
         fun get(context: Context): GarageDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, GarageDatabase::class.java, "rc-garage.db")
-                .addMigrations(MIGRATION_1_2).addCallback(INTEGRITY_CALLBACK).build().also { instance = it }
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3).addCallback(INTEGRITY_CALLBACK).build().also { instance = it }
         }
         // v1: local model baseline. v2 adds immutable, byte-exact import receipts.
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `import_sources` (`id` TEXT NOT NULL, `sha256` TEXT NOT NULL, `original` BLOB NOT NULL, `fileName` TEXT NOT NULL, `importedAt` INTEGER NOT NULL, `reportJson` TEXT NOT NULL, PRIMARY KEY(`id`))")
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_import_sources_sha256` ON `import_sources` (`sha256`)")
+                installIntegrity(db)
+            }
+        }
+        // Rules-only migration: replace v2 guards without changing any business row.
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                for (table in listOf("equipment", "assignments")) {
+                    for (operation in listOf("insert", "update")) {
+                        db.execSQL("DROP TRIGGER IF EXISTS ${table}_stock_$operation")
+                    }
+                }
                 installIntegrity(db)
             }
         }
@@ -47,12 +58,12 @@ abstract class GarageDatabase : RoomDatabase() {
                 guard("equipment", "receiver_link_$key", op, "NEW.linkedRadioId IS NOT NULL AND (NEW.type!='RECEIVER' OR EXISTS(SELECT 1 FROM equipment WHERE id=NEW.linkedRadioId AND type!='RADIO'))", "Invalid receiver radio link")
                 guard("equipment", "radio_target_$key", op, "NEW.type!='RADIO' AND EXISTS(SELECT 1 FROM equipment WHERE linkedRadioId=NEW.id)", "Referenced radio must remain a radio")
                 guard("equipment", "quantity_$key", op, "NEW.ownedQuantity<0 OR length(trim(NEW.reference))=0", "Invalid equipment quantity or reference")
-                guard("equipment", "stock_$key", op, "EXISTS(SELECT 1 FROM assignments WHERE equipmentId=NEW.id AND isActive=1) AND (NEW.ownedQuantity IS NULL OR NEW.ownedQuantity<1 OR (NEW.type!='RADIO' AND NEW.ownedQuantity<(SELECT COALESCE(SUM(quantity),0) FROM assignments WHERE equipmentId=NEW.id AND isActive=1)))", "Insufficient owned stock")
+                guard("equipment", "stock_$key", op, "NEW.type!='RADIO' AND EXISTS(SELECT 1 FROM assignments WHERE equipmentId=NEW.id AND isActive=1) AND (NEW.ownedQuantity IS NULL OR NEW.ownedQuantity<(SELECT COALESCE(SUM(quantity),0) FROM assignments WHERE equipmentId=NEW.id AND isActive=1))", "Insufficient owned stock")
                 guard("equipment", "units_$key", op, "(SELECT COUNT(*) FROM equipment_units WHERE equipmentId=NEW.id)>COALESCE(NEW.ownedQuantity,0)", "Owned quantity below tracked units")
                 guard("equipment_units", "stock_$key", op, "(SELECT COUNT(*) FROM equipment_units WHERE equipmentId=NEW.equipmentId AND id!=NEW.id)>=COALESCE((SELECT ownedQuantity FROM equipment WHERE id=NEW.equipmentId),0)", "Too many tracked units")
                 guard("assignments", "valid_$key", op, "NEW.quantity<=0 OR (NEW.role='RADIO' AND NEW.quantity!=1) OR NEW.role!=(SELECT type FROM equipment WHERE id=NEW.equipmentId) OR (NEW.unitId IS NOT NULL AND (NEW.quantity!=1 OR NEW.equipmentId!=(SELECT equipmentId FROM equipment_units WHERE id=NEW.unitId)))", "Invalid assignment role quantity or unit")
                 guard("assignments", "receiver_radio_$key", op, "NEW.isActive=1 AND NEW.role='RECEIVER' AND EXISTS(SELECT 1 FROM equipment e WHERE e.id=NEW.equipmentId AND e.linkedRadioId IS NOT NULL AND NOT EXISTS(SELECT 1 FROM assignments a WHERE a.vehicleId=NEW.vehicleId AND a.equipmentId=e.linkedRadioId AND a.isActive=1))", "Receiver requires its linked radio")
-                guard("assignments", "stock_$key", op, "NEW.isActive=1 AND (COALESCE((SELECT ownedQuantity FROM equipment WHERE id=NEW.equipmentId),0)<1 OR ((SELECT type FROM equipment WHERE id=NEW.equipmentId)!='RADIO' AND NEW.quantity+(SELECT COALESCE(SUM(quantity),0) FROM assignments WHERE equipmentId=NEW.equipmentId AND isActive=1 AND id!=NEW.id)>(SELECT ownedQuantity FROM equipment WHERE id=NEW.equipmentId)))", "Insufficient available stock")
+                guard("assignments", "stock_$key", op, "NEW.isActive=1 AND (SELECT type FROM equipment WHERE id=NEW.equipmentId)!='RADIO' AND (COALESCE((SELECT ownedQuantity FROM equipment WHERE id=NEW.equipmentId),0)<1 OR NEW.quantity+(SELECT COALESCE(SUM(quantity),0) FROM assignments WHERE equipmentId=NEW.equipmentId AND isActive=1 AND id!=NEW.id)>(SELECT ownedQuantity FROM equipment WHERE id=NEW.equipmentId))", "Insufficient available stock")
                 guard("assignments", "unit_$key", op, "NEW.isActive=1 AND NEW.unitId IS NOT NULL AND NEW.role!='RADIO' AND EXISTS(SELECT 1 FROM assignments WHERE unitId=NEW.unitId AND isActive=1 AND id!=NEW.id)", "Unit already assigned")
                 guard("radio_memories", "types_$key", op, "NEW.slot<1 OR (SELECT type FROM equipment WHERE id=NEW.radioId)!='RADIO' OR (NEW.receiverId IS NOT NULL AND (SELECT type FROM equipment WHERE id=NEW.receiverId)!='RECEIVER')", "Invalid radio memory")
                 guard("batteries", "values_$key", op, "NEW.ownedQuantity<0 OR NEW.capacityMah<=0 OR NEW.cells<=0 OR NEW.voltage<=0 OR NEW.cRating<0", "Invalid battery specification")

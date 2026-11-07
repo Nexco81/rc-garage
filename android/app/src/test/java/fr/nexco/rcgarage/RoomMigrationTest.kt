@@ -19,15 +19,12 @@ import java.util.UUID
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[32])
 class RoomMigrationTest {
-    @Test fun frozenV1MigratesWithoutLosingRowsAndDestructiveFallbackIsForbidden() = runBlocking {
-        val name="migration-test"
-        val context=ApplicationProvider.getApplicationContext<Context>()
-        context.deleteDatabase(name)
+    private fun frozenDatabase(context: Context,name: String,version: Int): SupportSQLiteOpenHelper {
         // Frozen, processor-exported v1 schema: do not rebuild v1 from today's entities.
-        val schema=JSONObject(javaClass.getResourceAsStream("/fr.nexco.rcgarage.data.GarageDatabase/1.json")!!
+        val schema=JSONObject(javaClass.getResourceAsStream("/fr.nexco.rcgarage.data.GarageDatabase/$version.json")!!
             .bufferedReader().use { it.readText() }).getJSONObject("database")
-        val old=FrameworkSQLiteOpenHelperFactory().create(SupportSQLiteOpenHelper.Configuration.builder(context)
-            .name(name).callback(object: SupportSQLiteOpenHelper.Callback(1) {
+        return FrameworkSQLiteOpenHelperFactory().create(SupportSQLiteOpenHelper.Configuration.builder(context)
+            .name(name).callback(object: SupportSQLiteOpenHelper.Callback(version) {
                 override fun onConfigure(db: SupportSQLiteDatabase) { db.setForeignKeyConstraintsEnabled(true) }
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     val entities=schema.getJSONArray("entities")
@@ -44,6 +41,13 @@ class RoomMigrationTest {
                 }
                 override fun onUpgrade(db: SupportSQLiteDatabase,oldVersion: Int,newVersion: Int) = error("Unexpected upgrade")
             }).build())
+    }
+
+    @Test fun frozenV1MigratesWithoutLosingRowsAndDestructiveFallbackIsForbidden() = runBlocking {
+        val name="migration-test"
+        val context=ApplicationProvider.getApplicationContext<Context>()
+        context.deleteDatabase(name)
+        val old=frozenDatabase(context,name,1)
         val vehicle=Vehicle(UUID.randomUUID(),"Test","Conservé")
         val equipment=Equipment(UUID.randomUUID(),EquipmentType.MOTOR,reference="Conservé",ownedQuantity=2)
         val assignment=EquipmentAssignment(UUID.randomUUID(),vehicle.id,equipment.id,EquipmentType.MOTOR)
@@ -60,7 +64,7 @@ class RoomMigrationTest {
         finally { noMigration.close() }
         assertTrue("Missing migration must fail instead of destroying data",refused)
         val db=Room.databaseBuilder(context,GarageDatabase::class.java,name)
-            .addMigrations(GarageDatabase.MIGRATION_1_2).addCallback(GarageDatabase.INTEGRITY_CALLBACK).allowMainThreadQueries().build()
+            .addMigrations(GarageDatabase.MIGRATION_1_2, GarageDatabase.MIGRATION_2_3).addCallback(GarageDatabase.INTEGRITY_CALLBACK).allowMainThreadQueries().build()
         try {
             assertEquals(listOf(vehicle),db.garage().vehicles())
             assertEquals(listOf(equipment),db.garage().equipment())
@@ -70,7 +74,71 @@ class RoomMigrationTest {
             var failed=false
             try { db.openHelper.writableDatabase.execSQL("UPDATE equipment SET ownedQuantity=-1") } catch(_:Exception) { failed=true }
             assertTrue(failed)
-            assertEquals(2,db.openHelper.readableDatabase.version)
+            assertEquals(3,db.openHelper.readableDatabase.version)
         } finally { db.close();context.deleteDatabase(name) }
     }
+    @Test fun v2UpgradeChangesGuardsWithoutChangingAnyBusinessRows() = runBlocking {
+        val name="migration-v2-test"
+        val context=ApplicationProvider.getApplicationContext<Context>()
+        context.deleteDatabase(name)
+        val old=frozenDatabase(context,name,2)
+        val sql=old.writableDatabase
+        val frozenGuards=org.json.JSONArray(javaClass.getResourceAsStream("/room-v2-stock-guards.json")!!
+            .bufferedReader().use{it.readText()})
+        for(i in 0 until frozenGuards.length()) sql.execSQL(frozenGuards.getString(i))
+        val vehicles=listOf(UUID.randomUUID(),UUID.randomUUID(),UUID.randomUUID())
+        vehicles.forEach { sql.execSQL("INSERT INTO vehicles(id,brand,name,status,notes) VALUES(?,?,?,?,?)",
+            arrayOf<Any>(it.toString(),"Test","Préservé","UNKNOWN","Notes inchangées")) }
+        val unknownRadio=UUID.randomUUID();val knownRadio=UUID.randomUUID();val motor=UUID.randomUUID()
+        sql.execSQL("INSERT INTO equipment(id,type,reference) VALUES(?,?,?)",arrayOf<Any>(unknownRadio.toString(),"RADIO","Flysky G7P"))
+        sql.execSQL("INSERT INTO equipment(id,type,reference,ownedQuantity) VALUES(?,?,?,?)",arrayOf<Any>(knownRadio.toString(),"RADIO","Flysky GT5",1))
+        sql.execSQL("INSERT INTO equipment(id,type,reference,ownedQuantity) VALUES(?,?,?,?)",arrayOf<Any>(motor.toString(),"MOTOR","Moteur test",1))
+        val knownAssignment=UUID.randomUUID()
+        sql.execSQL("INSERT INTO assignments(id,vehicleId,equipmentId,role,quantity,isActive) VALUES(?,?,?,?,?,?)",
+            arrayOf<Any>(knownAssignment.toString(),vehicles[0].toString(),knownRadio.toString(),"RADIO",1,1))
+        val receipt=UUID.randomUUID()
+        sql.execSQL("INSERT INTO import_sources(id,sha256,original,fileName,importedAt,reportJson) VALUES(?,?,?,?,?,?)",
+            arrayOf<Any>(receipt.toString(),"test-fingerprint","Original exact".toByteArray(),"fixture.json",123L,"{}"))
+        // Reproduce the v2 failure before upgrading.
+        var rejected=false
+        try {
+            sql.execSQL("INSERT INTO assignments(id,vehicleId,equipmentId,role,quantity,isActive) VALUES(?,?,?,?,?,?)",
+                arrayOf<Any>(UUID.randomUUID().toString(),vehicles[0].toString(),unknownRadio.toString(),"RADIO",1,1))
+        } catch(_:Exception) { rejected=true }
+        assertTrue(rejected)
+        val schema=JSONObject(javaClass.getResourceAsStream("/fr.nexco.rcgarage.data.GarageDatabase/2.json")!!
+            .bufferedReader().use{it.readText()}).getJSONObject("database").getJSONArray("entities")
+        val tables=(0 until schema.length()).map{schema.getJSONObject(it).getString("tableName")}
+        fun snapshot(database: SupportSQLiteDatabase): Map<String,List<List<String?>>> = tables.associateWith { table ->
+            database.query("SELECT * FROM `$table` ORDER BY rowid").use { cursor ->
+                buildList {
+                    while(cursor.moveToNext()) add((0 until cursor.columnCount).map { col ->
+                        if(cursor.getType(col)==android.database.Cursor.FIELD_TYPE_BLOB) cursor.getBlob(col).toList().toString()
+                        else cursor.getString(col)
+                    })
+                }
+            }
+        }
+        val before=snapshot(sql);old.close()
+        val upgraded=Room.databaseBuilder(context,GarageDatabase::class.java,name)
+            .addMigrations(GarageDatabase.MIGRATION_2_3).addCallback(GarageDatabase.INTEGRITY_CALLBACK).allowMainThreadQueries().build()
+        try {
+            assertEquals(before,snapshot(upgraded.openHelper.writableDatabase))
+            assertEquals(3,upgraded.openHelper.readableDatabase.version)
+            val dao=upgraded.garage()
+            for(v in vehicles) dao.insertAssignment(EquipmentAssignment(UUID.randomUUID(),v,unknownRadio,EquipmentType.RADIO))
+            assertNull(dao.equipment().single{it.id==unknownRadio}.ownedQuantity)
+            assertEquals(3,dao.assignments().count{it.equipmentId==unknownRadio})
+            dao.setOwnedQuantity(knownRadio,null) // v2 equipment_stock_update incorrectly rejected this.
+            upgraded.openHelper.writableDatabase.execSQL("UPDATE assignments SET isActive=1 WHERE id=?",arrayOf<Any>(knownAssignment.toString()))
+            assertNull(dao.equipment().single{it.id==knownRadio}.ownedQuantity)
+            dao.insertAssignment(EquipmentAssignment(UUID.randomUUID(),vehicles[0],motor,EquipmentType.MOTOR))
+            var overflowRejected=false
+            try { dao.insertAssignment(EquipmentAssignment(UUID.randomUUID(),vehicles[1],motor,EquipmentType.MOTOR)) }
+            catch(_:Exception) { overflowRejected=true }
+            assertTrue(overflowRejected)
+            assertArrayEquals("Original exact".toByteArray(),dao.source("test-fingerprint")!!.original)
+        } finally { upgraded.close();context.deleteDatabase(name) }
+    }
+
 }

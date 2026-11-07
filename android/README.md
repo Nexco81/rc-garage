@@ -61,3 +61,5 @@ confirmer un import atomique dans Room. Les données ne sont pas préchargées ;
 le jeu de test 25/6/1 reste dans les ressources de tests uniquement.
 Voir [décisions, schémas, règles d'import et vérifications](docs/STEP_02_IMPLEMENTATION.md).
 Le processeur Room utilise KSP ; les schémas versionnés sont sous `app/schemas/`.
+
+Correction de l’import historique : [quantités textuelles, radios partagées et migration v3](docs/LEGACY_IMPORT_CORRECTION.md).

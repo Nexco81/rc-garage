@@ -31,6 +31,7 @@ fun ImportScreen(onBack: () -> Unit, model: ImportViewModel = viewModel()) {
         if(state.busy) CircularProgressIndicator()
         state.preview?.let { preview ->
             Text(stringResource(R.string.import_counts,preview.vehicleCount,preview.equipmentCount,preview.bodyCount))
+            Text(stringResource(R.string.import_body_counts,preview.originalBodyCount,preview.independentBodyCount))
             Text(stringResource(R.string.import_fingerprint,preview.sha256))
             preview.errors.forEach { Text(it,color=MaterialTheme.colorScheme.error) }
             preview.warnings.forEach { Text(it) }

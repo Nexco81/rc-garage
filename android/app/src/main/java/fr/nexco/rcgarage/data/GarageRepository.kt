@@ -45,7 +45,7 @@ class GarageRepository(private val database: GarageDatabase) {
                     for(row in rows) {
                         val old=byId[id(row)]
                         if(old==null) { write(row); added++ }
-                        else { require(old==row) { "Conflit avec une donnée existante : ${id(row)}. Aucun changement appliqué." }; duplicates++ }
+                        else { require(old==row || (old is Equipment && row is Equipment && LegacyImporter.sameEquipment(old,row))) { "Conflit avec une donnée existante : ${id(row)}. Aucun changement appliqué." }; duplicates++ }
                     }
                     return added
                 }
