@@ -107,6 +107,9 @@ class CollectionRepository(private val db: GarageDatabase) {
         if(expected!=null) {
             unchanged(expected,all.find{it.id==expected.id})
             require(expected.isActive && expected.vehicleId==vehicleId && expected.role==equipment.type){"Affectation incompatible"}
+            require(expected.unitId==null || expected.equipmentId!=equipmentId || quantity==1) {
+                "Cette affectation identifie une unité physique : sa quantité doit rester 1."
+            }
         }
         require(quantity>0){"Quantité affectée strictement positive"}
         if(equipment.type==EquipmentType.RADIO) {

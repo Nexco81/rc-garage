@@ -86,7 +86,8 @@ activation explicite, sans changer les données.
 
 L'interface gère les quantités agrégées par référence ; les unités sérialisées
 existantes et leurs liens sont conservés/protégés mais n'ont pas encore d'éditeur
-dédié. Il n'y a pas de suppression de fiches ni corbeille (lot 5), ni Firebase.
+dédié. La quantité d'une affectation identifiée reste 1 ; elle ne peut pas être
+convertie silencieusement en quantité agrégée. Il n'y a pas de suppression de fiches ni corbeille (lot 5), ni Firebase.
 La provenance d'origine des carrosseries importées est immuable ; les nouvelles
 carrosseries sont ajoutées sans provenance d'origine supposée.
 
@@ -116,8 +117,8 @@ ne sont pas modifiés. Le travail est poussé uniquement sur
 `feat/android-collection-issue-3` pour mettre à jour la PR #13, sans nouvelle PR
 ni fusion automatique.
 
-Résultat local : **40 tests JVM exécutés, 0 échec, 0 ignoré**, dont un parcours
-Compose JVM et 13 tests du dépôt de collection ; les 26 tests antérieurs restent
+Résultat local : **41 tests JVM exécutés, 0 échec, 0 ignoré**, dont un parcours
+Compose JVM et 14 tests du dépôt de collection ; les 26 tests antérieurs restent
 inclus. Compilation APK debug, lint et compilation des tests instrumentés réussis.
 Aucun appareil/émulateur n'a été utilisé. Les avertissements lint antérieurs
 (sauvegarde, convention v26, monochrome, suggestion KTX) restent hors périmètre.

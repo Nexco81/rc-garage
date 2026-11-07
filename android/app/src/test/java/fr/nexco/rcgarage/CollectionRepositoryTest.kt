@@ -247,4 +247,19 @@ class CollectionRepositoryTest {
         assertTrue(repo.snapshot().memories.any{it.vehicleId==vid(1)})
     }
 
+    @Test fun editingQuantityCannotSilentlyDiscardAnExistingUnitLink()=runBlocking {
+        val e=repo.snapshot().equipment.single{it.id==eid(3)}
+        val old=repo.snapshot().assignments.single{it.equipmentId==e.id && it.isActive}
+        repo.removeAssignment(old)
+        repo.saveEquipment(e,e.copy(ownedQuantity=2))
+        val unit=EquipmentUnit(UUID.randomUUID(),e.id,serial="SYNTHETIC-UNIT")
+        dao.insertUnit(unit)
+        val specific=EquipmentAssignment(UUID.randomUUID(),vid(2),e.id,EquipmentType.MOTOR,unitId=unit.id)
+        dao.insertAssignment(specific)
+        val before=repo.snapshot()
+        fails {repo.saveAssignment(vid(2),specific,e.id,2,null)}
+        assertEquals(before,repo.snapshot())
+        assertEquals(unit.id,repo.snapshot().assignments.single{it.id==specific.id}.unitId)
+    }
+
 }

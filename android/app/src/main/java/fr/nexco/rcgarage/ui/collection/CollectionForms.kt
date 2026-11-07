@@ -204,11 +204,13 @@ private fun AssignmentForm(s: EditorSession.AssignmentEdit,vm: CollectionViewMod
         val items=data.equipment.filter{it.type==role}
         Choice("Référence",selected,listOf<String?>(null)+items.map{it.id.toString()},
             {id->items.find{it.id.toString()==id}?.let{e->"${e.brand.orEmpty()} ${e.reference} — disponible : ${data.available(e)?.toString() ?: "inconnu"}"} ?: "Choisir"},
-            {if(selected!=it) memory="";selected=it})
+            {if(selected!=it) memory="";if(s.initial?.unitId!=null && it==s.initial.equipmentId.toString()) quantity="1";selected=it})
         if(items.isEmpty()) Text("Aucune référence dans cette catégorie. Créez-la depuis Stocks.")
         if(role==EquipmentType.RADIO) {
             Text("Association partagée : aucune consommation de stock physique.")
             Input("Mémoire radio (facultative)",memory,{memory=it})
+        } else if(s.initial?.unitId!=null && selected==s.initial.equipmentId.toString()) {
+            Text("Unité physique identifiée : quantité 1. Son lien est conservé.")
         } else Input("Quantité affectée",quantity,{quantity=it})
     }
 }
