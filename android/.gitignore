@@ -1,0 +1,12 @@
+# Android local and secrets
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+*.jks
+*.keystore
+google-services.json
+service-account*.json
+*.apk
+*.aab
