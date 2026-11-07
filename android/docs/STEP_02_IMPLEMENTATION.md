@@ -30,7 +30,7 @@ négative, rôle compatible, unités appartenant à la référence et non allou�
 fois, stocks suffisants, relations radio/récepteur, mémoires uniques par radio et
 emplacement, provenance des carrosseries d'origine et photos principales cohérentes.
 
-Les radios sont partagées : une référence possédée peut servir plusieurs véhicules,
+Les radios sont partagées : une référence radio peut servir plusieurs véhicules,
 avec des mémoires distinctes, sans consommer une radio par véhicule. Les autres
 composants consomment la somme des quantités des affectations actives. Plusieurs
 composants d'un même rôle peuvent être affectés au même véhicule. Libérer désactive
@@ -71,7 +71,8 @@ affectations et journal. Aucun algorithme « dernier arrivé gagne » n'est ajou
   invalide/annulé n'est pas archivé dans la base. L'original contient aussi les champs
   historiques non interprétés (par exemple une mémoire radio non numérique).
 - Quantité absente : inconnue (`null`), jamais implicitement 1. Une quantité inconnue
-  ne permet pas d'affectation active. Les dates absentes restent nulles. Statut non
+  ne permet pas d'affectation active pour les composants consommant du stock ; les
+  radios partagées sont indépendantes de la quantité physique. Les dates absentes restent nulles. Statut non
   reconnu : `UNKNOWN` et libellé source conservé. Marque et nom du véhicule requis.
 - Véhicule vendu historique : vente `UNKNOWN`, `historyKnown=false`, date inconnue,
   snapshot immuable, aucune conclusion « vendu complet ». Ses anciennes affectations
@@ -87,11 +88,12 @@ affectations et journal. Aucun algorithme « dernier arrivé gagne » n'est ajou
 
 ## Schémas et migration
 
-La version courante est **2**. La v1 est la référence du modèle local sans les
+Le lot 2 a introduit la version **2**. Le correctif utilise désormais la version
+**3**, décrite dans [la correction de l’import](LEGACY_IMPORT_CORRECTION.md). La v1 est la référence du modèle local sans les
 copies originales ; aucune v1 Room n'avait été distribuée par l'étape 1. Son schéma
 est un export réel du processeur Room, figé sous `GarageDatabase/1.json` avant ajout
 de `import_sources`. Le test ouvre une base SQLite à partir de cet export figé,
-insère des données et affectations, puis l'ouvre avec Room v2 et la migration 1→2.
+insère des données et affectations, puis l'ouvre avec Room courant et les migrations explicites 1→2→3.
 Room vérifie la totalité du schéma attendu. Le test vérifie les données conservées,
 le stock disponible, les nouveaux triggers et le refus d'ouvrir sans migration.
 La v2 ajoute les reçus immuables et installe les protections SQL. Les créations

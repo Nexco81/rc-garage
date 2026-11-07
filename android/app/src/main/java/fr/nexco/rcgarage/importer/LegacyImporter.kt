@@ -20,6 +20,8 @@ class ImportPreview internal constructor(
     val vehicleCount get() = plan.vehicles.size
     val equipmentCount get() = plan.equipment.size
     val bodyCount get() = plan.bodies.size
+    val originalBodyCount get() = plan.bodies.count { it.isOriginal == true }
+    val independentBodyCount get() = plan.bodies.count { it.isOriginal != true }
     val assignmentCount get() = plan.assignments.size
     val canConfirm get() = errors.isEmpty()
     fun originalBytes(): ByteArray = bytes.copyOf()
@@ -50,6 +52,7 @@ object LegacyImporter {
                 return null
             }
             if (v !is String) { error(path, "$k doit être du texte"); return null }
+            if (k == "notes") return v // Notes are user content, including spaces and newlines.
             val s = v.trim()
             if (required && s.isBlank()) error(path, "$k requis")
             return s.takeIf { it.isNotEmpty() }
@@ -63,10 +66,13 @@ object LegacyImporter {
         fun integer(o: JSONObject, k: String, path: String): Int? {
             val v = o.opt(k)
             if (v == null || v == JSONObject.NULL) return null
-            if (v !is Number || !v.toDouble().isFinite() || v.toDouble() != v.toInt().toDouble() || v.toInt()<0) {
-                error(path, "$k doit être un entier positif ou nul"); return null
+            val quantity = when (v) {
+                is String -> v.trim().takeIf { it.matches(Regex("[0-9]+")) }?.toIntOrNull()
+                is Number -> runCatching { v.toString().toBigDecimal().toBigIntegerExact().intValueExact() }.getOrNull()
+                else -> null
             }
-            return v.toInt()
+            if (quantity == null || quantity < 0) error(path, "$k doit être un entier positif ou nul (maximum ${Int.MAX_VALUE})")
+            return quantity?.takeIf { it >= 0 }
         }
         fun array(o: JSONObject, k: String, required: Boolean = false): List<JSONObject> {
             val a = o.opt(k)
@@ -131,7 +137,9 @@ object LegacyImporter {
                 if (t == null) { error(path,"type inconnu"); return@forEachIndexed }
                 val name = string(o,"name",path,true) ?: return@forEachIndexed
                 val quantity = integer(o,"quantity",path)
-                if (quantity == null) warnings += "$path : quantité inconnue, affectations actives bloquées"
+                if (quantity == null && (!o.has("quantity") || o.isNull("quantity"))) warnings += if (t == EquipmentType.RADIO)
+                    "$path : quantité de radio inconnue, affectations partagées conservées sans consommer de stock"
+                else "$path : quantité inconnue, affectations actives bloquées"
                 add(gear,id,Equipment(id,t,string(o,"brand",path),name,quantity,
                     string(o,"inventoryId",path),canonical(o),string(o,"notes",path),
                     linkedRadioId=string(o,"radioId",path)?.let { stableId("equipment",it) }),path)
@@ -225,8 +233,10 @@ object LegacyImporter {
                     }
                 }
                 val active=assignments.values.filter { it.equipmentId==e.id && it.isActive }
-                val needed=if(e.type==EquipmentType.RADIO && active.isNotEmpty()) 1 else active.sumOf { it.quantity }
-                if(needed>0 && (e.ownedQuantity==null || needed>e.ownedQuantity)) error("stock/${e.id}","quantité insuffisante ou inconnue")
+                if(e.type!=EquipmentType.RADIO) {
+                    val needed=active.sumOf { it.quantity.toLong() }
+                    if(needed>0 && (e.ownedQuantity==null || needed>e.ownedQuantity)) error("stock/${e.id}","quantité insuffisante ou inconnue")
+                }
             }
             bodies.values.forEach { b ->
                 if(b.currentVehicleId!=null && !vehicles.containsKey(b.currentVehicleId)) error("carrosserie/${b.id}","véhicule introuvable")
@@ -245,6 +255,17 @@ object LegacyImporter {
             reference=read(o,"reference","body/$id",false),condition=read(o,"condition","body/$id",false),
             decoration=read(o,"decoration","body/$id",false),notes=read(o,"notes","body/$id",false),
             photo=read(o,"photo","body/$id",false),compatible=read(o,"compatible","body/$id",false))
+
+    internal fun sameEquipment(left: Equipment, right: Equipment): Boolean {
+        fun specs(e: Equipment): String? = e.specsJson?.let { raw ->
+            runCatching {
+                val json = JSONObject(raw)
+                if (json.has("quantity") && e.ownedQuantity != null) json.put("quantity", e.ownedQuantity)
+                canonical(json)
+            }.getOrDefault(raw)
+        }
+        return left.copy(specsJson=specs(left)) == right.copy(specsJson=specs(right))
+    }
 
     internal fun canonical(value: Any?): String = when(value) {
         is JSONObject -> value.keys().asSequence().toList().sorted().joinToString(",","{","}") { JSONObject.quote(it)+":"+canonical(value.get(it)) }

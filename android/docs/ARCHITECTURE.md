@@ -3,6 +3,7 @@
 ## Invariants métier
 - Identifiants UUID stables pour modèles, équipements, carrosseries, batteries et opérations.
 - Quantité possédée >= 0 ; quantité disponible = quantité possédée - allocations actives (hors radios partagées).
+- Radios RC : les associations aux véhicules et mémoires sont indépendantes de la quantité physique et ne consomment pas le stock. Une quantité absente reste inconnue ; aucun nombre de radios n’est déduit du nombre de modèles associés.
 - Les composants RTR d'origine sont représentés par un état « Origine », jamais par une ligne fictive de stock.
 - La marque et le modèle du véhicule sont obligatoires ; châssis suggérés uniquement pour la marque choisie.
 - Équipements et carrosseries : marque en saisie libre avec suggestions.

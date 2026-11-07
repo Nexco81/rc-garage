@@ -12,6 +12,7 @@
     <string name="import_explanation">Le fichier original reste intact. Vérifiez cet aperçu avant de confirmer. Un conflit annule tout import ; les valeurs inconnues restent inconnues.</string>
     <string name="import_choose">Choisir un fichier</string>
     <string name="import_counts">Aperçu — modèles : %1$d · références : %2$d · carrosseries : %3$d</string>
+    <string name="import_body_counts">Carrosseries d’origine : %1$d · indépendantes : %2$d</string>
     <string name="import_fingerprint">SHA-256 : %1$s</string>
     <string name="import_confirm">Confirmer l’import</string>
     <string name="import_cancel">Annuler l’aperçu</string>
