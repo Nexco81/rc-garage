@@ -31,6 +31,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import fr.nexco.rcgarage.R
+import fr.nexco.rcgarage.ui.importer.ImportScreen
 import fr.nexco.rcgarage.ui.theme.RCGarageTheme
 import fr.nexco.rcgarage.ui.theme.ThemeMode
 
@@ -50,8 +51,10 @@ fun RCGarageApp() {
         Scaffold { insets ->
             NavHost(navController, startDestination = "home", modifier = Modifier.padding(insets)) {
                 composable("home") {
-                    HomeScreen(onAppearance = { navController.navigate("appearance") { launchSingleTop = true } })
+                    HomeScreen(onAppearance = { navController.navigate("appearance") { launchSingleTop = true } },
+                        onImport = { navController.navigate("import") { launchSingleTop = true } })
                 }
+                composable("import") { ImportScreen(onBack = { navController.popBackStack() }) }
                 composable("appearance") {
                     AppearanceScreen(mode, onModeChange = {
                         mode = it
@@ -64,7 +67,7 @@ fun RCGarageApp() {
 }
 
 @Composable
-private fun HomeScreen(onAppearance: () -> Unit) {
+private fun HomeScreen(onAppearance: () -> Unit, onImport: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -73,6 +76,7 @@ private fun HomeScreen(onAppearance: () -> Unit) {
         Text(stringResource(R.string.home_title), style = MaterialTheme.typography.titleLarge)
         Text(stringResource(R.string.home_description))
         Text(stringResource(R.string.home_placeholder))
+        Button(onClick = onImport) { Text(stringResource(R.string.import_title)) }
         Button(onClick = onAppearance) { Text(stringResource(R.string.settings)) }
     }
 }

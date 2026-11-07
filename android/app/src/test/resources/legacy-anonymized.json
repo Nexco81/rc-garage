@@ -1,0 +1,310 @@
+{
+  "models": [
+    {
+      "id": "m0",
+      "brand": "Marque test",
+      "model": "Modèle 1",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": [
+        "b0"
+      ],
+      "radio": "g0",
+      "receiver": "g1",
+      "esc": "g2",
+      "motor": "g3",
+      "servo": "g4",
+      "memory": "1"
+    },
+    {
+      "id": "m1",
+      "brand": "Marque test",
+      "model": "Modèle 2",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": [],
+      "radio": "g0",
+      "motor": "g5",
+      "memory": "2"
+    },
+    {
+      "id": "m2",
+      "brand": "Marque test",
+      "model": "Modèle 3",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m3",
+      "brand": "Marque test",
+      "model": "Modèle 4",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m4",
+      "brand": "Marque test",
+      "model": "Modèle 5",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m5",
+      "brand": "Marque test",
+      "model": "Modèle 6",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m6",
+      "brand": "Marque test",
+      "model": "Modèle 7",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m7",
+      "brand": "Marque test",
+      "model": "Modèle 8",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m8",
+      "brand": "Marque test",
+      "model": "Modèle 9",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m9",
+      "brand": "Marque test",
+      "model": "Modèle 10",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m10",
+      "brand": "Marque test",
+      "model": "Modèle 11",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m11",
+      "brand": "Marque test",
+      "model": "Modèle 12",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m12",
+      "brand": "Marque test",
+      "model": "Modèle 13",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m13",
+      "brand": "Marque test",
+      "model": "Modèle 14",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m14",
+      "brand": "Marque test",
+      "model": "Modèle 15",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m15",
+      "brand": "Marque test",
+      "model": "Modèle 16",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m16",
+      "brand": "Marque test",
+      "model": "Modèle 17",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m17",
+      "brand": "Marque test",
+      "model": "Modèle 18",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m18",
+      "brand": "Marque test",
+      "model": "Modèle 19",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m19",
+      "brand": "Marque test",
+      "model": "Modèle 20",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m20",
+      "brand": "Marque test",
+      "model": "Modèle 21",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m21",
+      "brand": "Marque test",
+      "model": "Modèle 22",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m22",
+      "brand": "Marque test",
+      "model": "Modèle 23",
+      "status": "Monté",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m23",
+      "brand": "Marque test",
+      "model": "Modèle 24",
+      "status": "Vendu",
+      "rtr": false,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    },
+    {
+      "id": "m24",
+      "brand": "Arrma",
+      "model": "Senton 223S V4",
+      "status": "À vérifier",
+      "rtr": true,
+      "rtrOverride": false,
+      "bodies": [],
+      "bodyIds": []
+    }
+  ],
+  "gear": [
+    {
+      "id": "g0",
+      "type": "Radio",
+      "name": "Référence test 1",
+      "quantity": 1
+    },
+    {
+      "id": "g1",
+      "type": "Récepteur",
+      "name": "Référence test 2",
+      "quantity": 1
+    },
+    {
+      "id": "g2",
+      "type": "ESC",
+      "name": "Référence test 3",
+      "quantity": 1
+    },
+    {
+      "id": "g3",
+      "type": "Moteur",
+      "name": "Référence test 4",
+      "quantity": 1
+    },
+    {
+      "id": "g4",
+      "type": "Servo",
+      "name": "Référence test 5",
+      "quantity": 1
+    },
+    {
+      "id": "g5",
+      "type": "Moteur",
+      "name": "Référence test 6",
+      "quantity": 1
+    }
+  ],
+  "bodyStock": [
+    {
+      "id": "b0",
+      "name": "Carrosserie test",
+      "modelId": "m0"
+    }
+  ]
+}

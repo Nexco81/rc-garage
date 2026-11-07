@@ -47,9 +47,17 @@ L'APK se trouve dans `app/build/outputs/apk/debug/app-debug.apk`.
 L'accueil est autonome et fonctionne sans connexion ni configuration Firebase.
 Le bouton « Apparence » ouvre les choix système, clair et sombre ; le choix est
 conservé localement entre les lancements. Aucun inventaire de démonstration
-ni donnée personnelle n'est embarqué. Room est seulement une dépendance à ce stade ;
-les entités, migrations, repositories et modules métier arrivent dans les lots suivants.
+ni donnée personnelle n'est embarqué. Room fournit désormais le modèle local et l’import historique (étape 2) ;
+les écrans de gestion et les commandes métier arrivent dans les lots suivants.
 
 La CI `.github/workflows/android.yml` compile l'APK et les tests instrumentés,
 exécute les tests JVM et lint, sans secret ni publication. Les tests instrumentés
 sont compilés en CI mais doivent être exécutés sur appareil/émulateur séparément.
+
+## Modèle local et import historique (étape 2)
+
+L'écran **Importer une sauvegarde JSON** permet maintenant de prévisualiser et
+confirmer un import atomique dans Room. Les données ne sont pas préchargées ;
+le jeu de test 25/6/1 reste dans les ressources de tests uniquement.
+Voir [décisions, schémas, règles d'import et vérifications](docs/STEP_02_IMPLEMENTATION.md).
+Le processeur Room utilise KSP ; les schémas versionnés sont sous `app/schemas/`.
