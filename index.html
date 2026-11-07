@@ -14,6 +14,9 @@ function saveDb(){try{localStorage.setItem(K,JSON.stringify(db))}catch{alert('St
 function gName(id){const g=db.gear.find(x=>x.id===id);return g?g.name+(g.inventoryId?' #'+g.inventoryId:''):id||''}
 function modelGearLabel(m,k){return m[k]?gName(m[k]):'—'}
 function assigned(g){return db.models.filter(m=>['radio','receiver','esc','motor'].some(k=>m[k]===g.id))}
+function bodySummary(b){return typeof b==='string'?b:[b.brand,b.reference,b.name,b.decoration,b.condition].filter(Boolean).join(' · ')}
+function bodyRow(b={}){if(typeof b==='string')b={name:b};return '<div class="bodyRow" style="border:1px solid #40536e;padding:10px;border-radius:10px;margin:8px 0"><div class="fields">'+[['name','Nom / modèle'],['brand','Marque'],['reference','Référence'],['decoration','Décoration / peinture'],['condition','État'],['photo','URL photo'],['compatible','Châssis compatibles']].map(([k,l])=>field('body_'+k,l,b[k]||'')).join('')+'</div><button type="button" class="removeBody">Retirer cette carrosserie</button></div>'}
+function wireBodies(){document.querySelectorAll('.removeBody').forEach(b=>b.onclick=()=>b.closest('.bodyRow').remove())}
 function render(){
 $('owned').textContent=db.models.filter(x=>!['Vendu','À vérifier'].includes(x.status)).length;
 $('projects').textContent=db.models.filter(x=>['À monter','En cours','En attente de réception','Préparation compétition'].includes(x.status)).length;
@@ -22,7 +25,7 @@ const q=$('search').value.toLowerCase(),f=$('filter').value,list=tab==='models'?
 $('filter').innerHTML='<option value="">Tous</option>'+(tab==='models'?statuses:['Radio','Récepteur','ESC','Moteur']).map(x=>'<option '+(x===f?'selected':'')+'>'+x+'</option>').join('');
 $('cards').innerHTML=list.filter(x=>(!f||(tab==='models'?x.status:x.type)===f)&&JSON.stringify(x).toLowerCase().includes(q)).map(x=>{
 const details=tab==='models'
-?'<div>Châssis : '+e(x.chassis||'—')+'</div><div>Utilisation : '+e(x.usage||'À définir')+'</div><div>Carrosseries : '+e((x.bodies||[]).join(' • ')||'—')+'</div><div>Radio : '+e(modelGearLabel(x,'radio'))+(x.memory?' — mémoire '+e(x.memory):'')+'</div><div>Récepteur : '+e(modelGearLabel(x,'receiver'))+'</div><div>ESC : '+e(modelGearLabel(x,'esc'))+'</div><div>Moteur : '+e(modelGearLabel(x,'motor'))+'</div>'
+?'<div>Châssis : '+e(x.chassis||'—')+'</div><div>Utilisation : '+e(x.usage||'À définir')+'</div><div>Carrosseries : '+e((x.bodies||[]).map(bodySummary).join(' | ')||'—')+'</div><div>Radio : '+e(modelGearLabel(x,'radio'))+(x.memory?' — mémoire '+e(x.memory):'')+'</div><div>Récepteur : '+e(modelGearLabel(x,'receiver'))+'</div><div>ESC : '+e(modelGearLabel(x,'esc'))+'</div><div>Moteur : '+e(modelGearLabel(x,'motor'))+'</div>'
 :'<div>Identifiant : '+e(x.inventoryId||'—')+'</div>'+(x.type==='Récepteur'?'<div>Radio liée : '+e(gName(x.radioId)||'Non liée')+'</div>':'')+'<div>Affectation : '+e(assigned(x).map(m=>m.brand+' '+m.model).join(', ')||'Disponible')+'</div>';
 return '<article class="card"><span class="tag">'+e(tab==='models'?x.status:x.type)+'</span><h3>'+e(tab==='models'?x.brand+' '+x.model:x.name)+'</h3><div class="meta">'+details+'<div>'+e(x.notes||'')+'</div></div><button data-id="'+e(x.id)+'">Modifier</button></article>'
 }).join('')||'<p>Aucune fiche.</p>';
@@ -34,7 +37,7 @@ editing=id;const x=(tab==='models'?db.models:db.gear).find(y=>y.id===id)||{};
 $('heading').textContent=id?'Modifier une fiche':'Ajouter une fiche';let h='';
 if(tab==='models'){
 for(const [k,l] of [['brand','Marque'],['model','Nom du modèle'],['chassis','Référence du châssis']])h+=field(k,l,x[k]);
-h+=field('bodies','Carrosseries (une par ligne)',(x.bodies||[]).join('\n'));
+h+='<div style="grid-column:1/-1"><strong>Carrosseries du châssis</strong><div id="bodyRows">'+(x.bodies||[]).map(bodyRow).join('')+'</div><button type="button" id="addBody">+ Ajouter une carrosserie</button></div>';
 h+=field('status','État du projet',x.status||'Monté',statuses.map(v=>[v,v]));
 h+=field('usage','Utilisation',x.usage||'À définir',usages.map(v=>[v,v]));
 for(const [k,l,t] of [['radio','Radio / émetteur','Radio'],['receiver','Récepteur physique','Récepteur'],['esc','ESC','ESC'],['motor','Moteur','Moteur']]){
@@ -52,14 +55,14 @@ h+=field('inventoryId','Identifiant individuel (ex. RX-01)',x.inventoryId);
 h+=field('radioId','Radio associée (pour un récepteur)',x.radioId||'',[['','Aucune radio'],...db.gear.filter(g=>g.type==='Radio').map(g=>[g.id,gName(g)])]);
 h+=field('notes','Notes',x.notes);
 }
-$('fields').innerHTML=h;$('error').textContent='';$('delete').classList.toggle('hidden',!id);$('editor').classList.remove('hidden');$('editor').scrollIntoView({behavior:'smooth'});
+$('fields').innerHTML=h;if(tab==='models'){$('addBody').onclick=()=>{$('bodyRows').insertAdjacentHTML('beforeend',bodyRow());wireBodies()};wireBodies()}$('error').textContent='';$('delete').classList.toggle('hidden',!id);$('editor').classList.remove('hidden');$('editor').scrollIntoView({behavior:'smooth'});
 }
 $('save').onclick=()=>{
-const keys=tab==='models'?['brand','model','chassis','bodies','status','usage','radio','receiver','esc','motor','memory','notes']:['type','name','inventoryId','radioId','notes'];
+const keys=tab==='models'?['brand','model','chassis','status','usage','radio','receiver','esc','motor','memory','notes']:['type','name','inventoryId','radioId','notes'];
 let x={id:editing||'id'+Date.now()+Math.random().toString(36).slice(2)};keys.forEach(k=>x[k]=$('f-'+k).value.trim());
 if(tab==='models'){
 if(!x.brand||!x.model)return $('error').textContent='Marque et modèle requis.';
-x.bodies=x.bodies.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+x.bodies=Array.from(document.querySelectorAll('.bodyRow')).map(row=>{const obj={};for(const k of ['name','brand','reference','decoration','condition','photo','compatible'])obj[k]=row.querySelector('[id="f-body_'+k+'"]').value.trim();return obj}).filter(b=>Object.values(b).some(Boolean));
 for(const k of ['receiver','esc','motor'])if(x[k]&&db.models.some(m=>m.id!==editing&&m[k]===x[k]))return $('error').textContent='Ce composant physique est déjà affecté à un autre modèle.';
 if(x.receiver){const rx=db.gear.find(g=>g.id===x.receiver);if(rx?.radioId&&x.radio&&rx.radioId!==x.radio)return $('error').textContent='Le récepteur est lié à une autre radio. Modifie sa fiche ou choisis la radio correspondante.';if(rx?.radioId&&!x.radio)return $('error').textContent='Sélectionne la radio liée à ce récepteur.'}
 if(x.memory&&!x.radio)return $('error').textContent='Choisis une radio pour renseigner son numéro de mémoire.';
