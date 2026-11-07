@@ -28,14 +28,15 @@ fun CollectionScreen(onHome: ()->Unit,vm: CollectionViewModel=viewModel()) {
     val nav=rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
     val root=entry?.destination?.route
+    val topLevel=root==null || root in listOf("collection","stock","bodies","batteries")
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(4.dp)) {
             for((route,label) in listOf("collection" to "Collection","stock" to "Stocks","bodies" to "Carrosseries","batteries" to "Batteries")) {
                 TextButton(onClick={nav.navigate(route){popUpTo("collection");launchSingleTop=true}}){Text(label)}
             }
         }
-        TextButton(onClick={if(root in listOf("collection","stock","bodies","batteries")) onHome() else nav.popBackStack()}) {
-            Text(if(root in listOf("collection","stock","bodies","batteries")) "Retour à l’accueil" else "Retour")
+        TextButton(onClick={if(topLevel) onHome() else nav.popBackStack()}) {
+            Text(if(topLevel) "Retour à l’accueil" else "Retour")
         }
         vm.message?.let { Text(it,Modifier.padding(horizontal=16.dp)) }
         when {
