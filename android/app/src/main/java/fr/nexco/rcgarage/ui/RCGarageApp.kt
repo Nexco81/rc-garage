@@ -32,6 +32,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import fr.nexco.rcgarage.R
 import fr.nexco.rcgarage.ui.importer.ImportScreen
+import fr.nexco.rcgarage.ui.collection.CollectionScreen
 import fr.nexco.rcgarage.ui.theme.RCGarageTheme
 import fr.nexco.rcgarage.ui.theme.ThemeMode
 
@@ -52,8 +53,10 @@ fun RCGarageApp() {
             NavHost(navController, startDestination = "home", modifier = Modifier.padding(insets)) {
                 composable("home") {
                     HomeScreen(onAppearance = { navController.navigate("appearance") { launchSingleTop = true } },
-                        onImport = { navController.navigate("import") { launchSingleTop = true } })
+                        onImport = { navController.navigate("import") { launchSingleTop = true } },
+                        onCollection = { navController.navigate("garage") { launchSingleTop = true } })
                 }
+                composable("garage") { CollectionScreen(onHome = { navController.popBackStack() }) }
                 composable("import") { ImportScreen(onBack = { navController.popBackStack() }) }
                 composable("appearance") {
                     AppearanceScreen(mode, onModeChange = {
@@ -67,7 +70,7 @@ fun RCGarageApp() {
 }
 
 @Composable
-private fun HomeScreen(onAppearance: () -> Unit, onImport: () -> Unit) {
+private fun HomeScreen(onAppearance: () -> Unit, onImport: () -> Unit, onCollection: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -75,7 +78,7 @@ private fun HomeScreen(onAppearance: () -> Unit, onImport: () -> Unit) {
         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineLarge)
         Text(stringResource(R.string.home_title), style = MaterialTheme.typography.titleLarge)
         Text(stringResource(R.string.home_description))
-        Text(stringResource(R.string.home_placeholder))
+        Button(onClick = onCollection) { Text("Collection et stocks") }
         Button(onClick = onImport) { Text(stringResource(R.string.import_title)) }
         Button(onClick = onAppearance) { Text(stringResource(R.string.settings)) }
     }

@@ -2,7 +2,6 @@
     <string name="app_name">RC Garage</string>
     <string name="home_title">Bienvenue dans RC Garage</string>
     <string name="home_description">Votre garage RC, accessible hors ligne.</string>
-    <string name="home_placeholder">La collection et les inventaires seront ajoutés dans les prochaines étapes.</string>
     <string name="settings">Apparence</string>
     <string name="theme_system">Système</string>
     <string name="theme_light">Clair</string>

@@ -12,6 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @TypeConverters(Converters::class)
 abstract class GarageDatabase : RoomDatabase() {
     abstract fun garage(): GarageDao
+    abstract fun collection(): fr.nexco.rcgarage.collection.CollectionDao
     companion object {
         @Volatile private var instance: GarageDatabase? = null
         fun get(context: Context): GarageDatabase = instance ?: synchronized(this) {
