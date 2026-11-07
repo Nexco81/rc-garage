@@ -38,7 +38,7 @@ const q=$('search').value.toLowerCase(),f=$('filter').value,list=tab==='models'?
 $('filter').innerHTML='<option value="">Tous</option>'+(tab==='models'?statuses:tab==='gear'?['Radio','Récepteur','ESC','Moteur']:['Disponible','Affectée']).map(x=>'<option '+(x===f?'selected':'')+'>'+x+'</option>').join('');
 $('cards').innerHTML=list.filter(x=>(!f||(tab==='models'?x.status:tab==='gear'?x.type:(x.modelId?'Affectée':'Disponible'))===f)&&JSON.stringify(x).toLowerCase().includes(q)).map(x=>{
 const details=tab==='bodies'?'<div>Marque : '+e(x.brand||'—')+'</div><div>Référence : '+e(x.reference||'—')+'</div><div>Décoration : '+e(x.decoration||'—')+'</div><div>État : '+e(x.condition||'—')+'</div><div>Châssis compatibles : '+e(x.compatible||'—')+'</div><div>Montée sur : '+e(bodyOwner(x)?bodyOwner(x).brand+' '+bodyOwner(x).model:'Aucun')+'</div>'+(x.photo?'<div><a style="color:#5dd5a5" target="_blank" rel="noopener" href="'+e(x.photo)+'">Photo</a></div>':''):tab==='models'
-?'<div>Châssis : '+e(x.chassis||'—')+'</div><div>Utilisation : '+e(x.usage||'À définir')+'</div><div>Carrosseries : '+e([...(x.boxBody?.enabled?['De boîte : '+[x.boxBody.brand,x.boxBody.model].filter(Boolean).join(' ')]:[]),...(x.bodyIds||[]).map(id=>{const b=db.bodyStock.find(z=>z.id===id);return b?bodyName(b):''}).filter(Boolean)].join(' | ')||'—')+'</div><div>Radio : '+e(modelGearLabel(x,'radio'))+(x.memory?' — mémoire '+e(x.memory):'')+'</div><div>Récepteur : '+e(modelGearLabel(x,'receiver'))+'</div><div>ESC : '+e(modelGearLabel(x,'esc'))+'</div><div>Moteur : '+e(modelGearLabel(x,'motor'))+'</div>'
+?'<div>Châssis : '+e(x.chassis||'—')+'</div><div>Utilisation : '+e(x.usage||'À définir')+'</div><div>Carrosseries : '+e([...(x.boxBody?.enabled?['De boîte : '+[x.boxBody.brand,x.boxBody.model].filter(Boolean).join(' ')]:[]),...(x.bodyIds||[]).map(id=>{const b=db.bodyStock.find(z=>z.id===id);return b?bodyName(b):''}).filter(Boolean)].join(' | ')||'—')+'</div><div>Radio : '+e(modelGearLabel(x,'radio'))+(x.memory?' — mémoire '+e(x.memory):'')+'</div><div>Récepteur : '+e(modelGearLabel(x,'receiver'))+'</div><div>ESC : '+e(modelGearLabel(x,'esc'))+'</div><div>Moteur : '+e(modelGearLabel(x,'motor'))+'</div>')
 :'<div>Identifiant : '+e(x.inventoryId||'—')+'</div>'+(x.type==='Récepteur'?'<div>Radio liée : '+e(gName(x.radioId)||'Non liée')+'</div>':'')+'<div>Stock : '+e(stockQty(x))+' | Disponible : '+e(x.type==='Radio'?'Partagée':availableQty(x))+'</div><div>Affectation : '+e(assigned(x).map(m=>m.brand+' '+m.model).join(', ')||'Disponible')+'</div>';
 return '<article class="card"><span class="tag">'+e(tab==='models'?x.status:tab==='gear'?x.type:(x.modelId?'Affectée':'Disponible'))+'</span><h3>'+e(tab==='models'?x.brand+' '+x.model:tab==='gear'?x.name:bodyName(x))+'</h3><div class="meta">'+details+'<div>'+e(x.notes||'')+'</div></div><button data-id="'+e(x.id)+'">Modifier</button></article>'
 }).join('')||'<p>Aucune fiche.</p>';
@@ -53,6 +53,7 @@ for(const [k,l] of [['brand','Marque'],['model','Nom du modèle'],['chassis','R�
 h+='<div style="grid-column:1/-1"><strong>Carrosseries du châssis</strong><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0"><label style="display:flex;align-items:center;gap:7px"><input type="checkbox" id="f-boxEnabled" '+(x.boxBody?.enabled!==false?'checked':'')+'> Du kit</label><label style="flex:1;min-width:160px">Modèle<input id="f-boxModel" value="'+e(x.boxBody?.model??x.model??'')+'"></label></div><div id="bodyLinks">'+(x.bodyIds||[]).map(b=>bodySelectRow(b,x)).join('')+'</div><button type="button" id="addBodyLink">+ Associer une carrosserie du stock</button></div>';
 h+=field('status','État du projet',x.status||'Monté',statuses.map(v=>[v,v]));
 h+=field('usage','Utilisation',x.usage||'À définir',usages.map(v=>[v,v]));
+h+='<div style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:9px"><input type="checkbox" id="f-rtr" '+(x.rtr?'checked':'')+'> Ready to Run (RTR) d’origine</label><label id="rtrOverrideRow" style="display:flex;align-items:center;gap:9px;margin:10px 0"><input type="checkbox" id="f-rtrOverride" '+(x.rtrOverride?'checked':'')+'> Électronique personnelle installée</label><small id="rtrInfo">Les affectations électroniques sont conservées même si les champs sont masqués.</small></div><div id="electronicsFields" class="fields" style="grid-column:1/-1">';
 for(const [k,l,t] of [['radio','Radio / émetteur','Radio'],['receiver','Récepteur physique','Récepteur'],['esc','ESC','ESC'],['motor','Moteur','Moteur']]){
 let opts=[['','Non affecté']];
 db.gear.filter(g=>g.type===t&&(k==='radio'||availableQty(g,id)>0||x[k]===g.id)).forEach(g=>{opts.push([g.id,gName(g.id)+(k==='radio'?'':' — disponible : '+availableQty(g,id))])});
@@ -60,6 +61,7 @@ if(x[k]&&!opts.some(o=>o[0]===x[k]))opts.push([x[k],x[k]+' (ancienne valeur)']);
 h+=field(k,l,x[k],opts)
 }
 h+=field('memory','N° mémoire radio',x.memory);
+h+='</div>';
 h+=field('notes','Notes',x.notes);
 }else if(tab==='gear'){
 h+=field('type','Type',x.type||'Moteur',['Radio','Récepteur','ESC','Moteur'].map(v=>[v,v]));
@@ -71,13 +73,14 @@ h+=field('notes','Notes',x.notes);
 for(const [k,l] of [['brand','Marque'],['name','Modèle / nom'],['reference','Référence'],['decoration','Décoration']])h+=field(k,l,x[k]);h+=field('condition','État',x.condition||'',[['','Non renseigné'],...['A peindre','Exposition','Neuve','Utilisée','Très usée','Poubelle','Vendue'].map(v=>[v,v]),...((x.condition&&!['A peindre','Exposition','Neuve','Utilisée','Très usée','Poubelle','Vendue'].includes(x.condition))?[[x.condition,x.condition+' (ancien état)']]:[])]);for(const [k,l] of [['photo','URL photo'],['compatible','Châssis compatibles']])h+=field(k,l,x[k]);
 h+=field('notes','Notes',x.notes);
 }
-$('fields').innerHTML=h;if(tab==='models'){$('addBodyLink').onclick=()=>{$('bodyLinks').insertAdjacentHTML('beforeend',bodySelectRow('',x));wireBodyLinks()};wireBodyLinks()}$('error').textContent='';$('delete').classList.toggle('hidden',!id);$('editor').classList.remove('hidden');$('editor').scrollIntoView({behavior:'smooth'});
+$('fields').innerHTML=h;if(tab==='models'){$('addBodyLink').onclick=()=>{$('bodyLinks').insertAdjacentHTML('beforeend',bodySelectRow('',x));wireBodyLinks()};wireBodyLinks();const syncRtr=()=>{const r=$('f-rtr').checked;$('rtrOverrideRow').style.display=r?'flex':'none';$('electronicsFields').style.display=(!r||$('f-rtrOverride').checked)?'grid':'none';$('rtrInfo').textContent=r&&!$('f-rtrOverride').checked?'RTR d’origine : détails masqués, valeurs éventuellement enregistrées conservées.':'Les affectations électroniques sont conservées.'};$('f-rtr').onchange=syncRtr;$('f-rtrOverride').onchange=syncRtr;syncRtr()}$('error').textContent='';$('delete').classList.toggle('hidden',!id);$('editor').classList.remove('hidden');$('editor').scrollIntoView({behavior:'smooth'});
 }
 $('save').onclick=()=>{
 const keys=tab==='models'?['brand','model','chassis','status','usage','radio','receiver','esc','motor','memory','notes']:tab==='gear'?['type','name','inventoryId','quantity','radioId','notes']:['brand','name','reference','decoration','condition','photo','compatible','notes'];
 let x={id:editing||'id'+Date.now()+Math.random().toString(36).slice(2)};keys.forEach(k=>x[k]=$('f-'+k).value.trim());
 if(tab==='models'){
 if(!x.brand||!x.model)return $('error').textContent='Marque et modèle requis.';
+x.rtr=$('f-rtr').checked;x.rtrOverride=$('f-rtrOverride').checked;
 x.boxBody={enabled:$('f-boxEnabled').checked,brand:'',model:$('f-boxModel').value.trim()};
 x.bodyIds=Array.from(document.querySelectorAll('.bodyLink select')).map(el=>el.value).filter(Boolean);
 if(new Set(x.bodyIds).size!==x.bodyIds.length)return $('error').textContent='Une carrosserie ne peut être ajoutée deux fois sur le même modèle.';
@@ -118,7 +121,7 @@ function csvLine(row){return row.map(csvCell).join(';')}
 function downloadCsv(name,rows){const data='\ufeff'+rows.map(csvLine).join('\r\n');const url=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8;'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}
 $('exportExcel').onclick=()=>{
 const rows=[['Section','Marque / Type','Modèle / Référence','Châssis','Statut','Utilisation','Radio','Mémoire','Récepteur','ESC','Moteur','Quantité totale','Quantité disponible','Carrosseries','Notes']];
-db.models.forEach(m=>rows.push(['Modèle',m.brand,m.model,m.chassis,m.status,m.usage,gName(m.radio),m.memory,gName(m.receiver),gName(m.esc),gName(m.motor),'','',[...(m.boxBody?.enabled?['De boîte : '+m.boxBody.brand+' '+m.boxBody.model]:[]),...(m.bodyIds||[]).map(id=>bodyName(db.bodyStock.find(b=>b.id===id)||{}))].join(' | '),m.notes]));
+db.models.forEach(m=>rows.push(['Modèle',m.brand,m.model,m.chassis,m.status,m.usage+(m.rtr?(m.rtrOverride?' | RTR modifié':' | RTR d’origine'):' | Non RTR'),gName(m.radio),m.memory,gName(m.receiver),gName(m.esc),gName(m.motor),'','',[...(m.boxBody?.enabled?['De boîte : '+m.boxBody.brand+' '+m.boxBody.model]:[]),...(m.bodyIds||[]).map(id=>bodyName(db.bodyStock.find(b=>b.id===id)||{}))].join(' | '),m.notes]));
 db.gear.forEach(g=>rows.push(['Électronique',g.type,g.name,'','','',g.type==='Récepteur'?gName(g.radioId):'','','','',stockQty(g),g.type==='Radio'?'Partagée':availableQty(g),'',g.notes]));
 db.bodyStock.forEach(b=>{const m=bodyOwner(b);rows.push(['Carrosserie',b.brand,b.name,m?.chassis||'',b.condition,'',m?m.brand+' '+m.model:'Disponible','','','','','','',b.reference,(b.decoration||'')+' ; Photo : '+(b.photo||'')+' ; Compatibilité : '+(b.compatible||'')])});
 downloadCsv('rc-garage-export-excel.csv',rows)
