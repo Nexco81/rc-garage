@@ -42,7 +42,7 @@ h+=field('status','État du projet',x.status||'Monté',statuses.map(v=>[v,v]));
 h+=field('usage','Utilisation',x.usage||'À définir',usages.map(v=>[v,v]));
 for(const [k,l,t] of [['radio','Radio / émetteur','Radio'],['receiver','Récepteur physique','Récepteur'],['esc','ESC','ESC'],['motor','Moteur','Moteur']]){
 let opts=[['','Non affecté']];
-db.gear.filter(g=>g.type===t).forEach(g=>{const used=k!=='radio'&&db.models.some(m=>m.id!==id&&m[k]===g.id);opts.push([g.id,gName(g)+(used?' (déjà affecté)':'')])});
+db.gear.filter(g=>g.type===t).forEach(g=>{const used=k!=='radio'&&db.models.some(m=>m.id!==id&&m[k]===g.id);opts.push([g.id,gName(g.id)+(used?' (déjà affecté)':'')])});
 if(x[k]&&!opts.some(o=>o[0]===x[k]))opts.push([x[k],x[k]+' (ancienne valeur)']);
 h+=field(k,l,x[k],opts)
 }
@@ -52,7 +52,7 @@ h+=field('notes','Notes',x.notes);
 h+=field('type','Type',x.type||'Moteur',['Radio','Récepteur','ESC','Moteur'].map(v=>[v,v]));
 h+=field('name','Référence / modèle',x.name);
 h+=field('inventoryId','Identifiant individuel (ex. RX-01)',x.inventoryId);
-h+=field('radioId','Radio associée (pour un récepteur)',x.radioId||'',[['','Aucune radio'],...db.gear.filter(g=>g.type==='Radio').map(g=>[g.id,gName(g)])]);
+h+=field('radioId','Radio associée (pour un récepteur)',x.radioId||'',[['','Aucune radio'],...db.gear.filter(g=>g.type==='Radio').map(g=>[g.id,gName(g.id)])]);
 h+=field('notes','Notes',x.notes);
 }
 $('fields').innerHTML=h;if(tab==='models'){$('addBody').onclick=()=>{$('bodyRows').insertAdjacentHTML('beforeend',bodyRow());wireBodies()};wireBodies()}$('error').textContent='';$('delete').classList.toggle('hidden',!id);$('editor').classList.remove('hidden');$('editor').scrollIntoView({behavior:'smooth'});
