@@ -9,7 +9,7 @@ db.models.forEach(m=>{if(!Array.isArray(m.bodies))m.bodies=[];if(!m.usage)m.usag
 db.gear.forEach(g=>{if(g.type==='Récepteur'&&!g.radioId)g.radioId='';if(!g.inventoryId)g.inventoryId=''});
 let tab='models',editing=null;
 const $=x=>document.getElementById(x);
-const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function saveDb(){try{localStorage.setItem(K,JSON.stringify(db))}catch{alert('Stockage saturé : exporte une sauvegarde JSON.')}}
 function gName(id){const g=db.gear.find(x=>x.id===id);return g?g.name+(g.inventoryId?' #'+g.inventoryId:''):id||''}
 function modelGearLabel(m,k){return m[k]?gName(m[k]):'—'}
@@ -69,7 +69,7 @@ if(!x.name)return $('error').textContent='Référence requise.';
 if(x.type!=='Récepteur')x.radioId='';
 if(x.type==='Récepteur'&&x.radioId&&!db.gear.some(g=>g.id===x.radioId&&g.type==='Radio'))return $('error').textContent='Radio associée introuvable.';
 if(x.type==='Récepteur'&&x.radioId&&db.models.some(m=>m.receiver===editing&&m.radio&&m.radio!==x.radioId))return $('error').textContent='Ce récepteur est utilisé avec une autre radio sur une fiche véhicule.';
-if(x.type==='Radio'&&editing&&db.gear.some(g=>g.type==='Récepteur'&&g.radioId===editing)&&x.type!=='Radio')return $('error').textContent='Radio encore liée à des récepteurs.';
+if(editing&&db.gear.some(g=>g.type==='Récepteur'&&g.radioId===editing)&&x.type!=='Radio')return $('error').textContent='Radio encore liée à des récepteurs.';
 }
 const list=tab==='models'?db.models:db.gear;
 if(editing)list.splice(list.findIndex(y=>y.id===editing),1,x);else list.push(x);
