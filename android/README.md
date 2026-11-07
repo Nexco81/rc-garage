@@ -63,3 +63,10 @@ Voir [décisions, schémas, règles d'import et vérifications](docs/STEP_02_IMP
 Le processeur Room utilise KSP ; les schémas versionnés sont sous `app/schemas/`.
 
 Correction de l’import historique : [quantités textuelles, radios partagées et migration v3](docs/LEGACY_IMPORT_CORRECTION.md).
+
+## Collection et stocks (étape 3)
+
+Depuis l'accueil : **Collection et stocks**. Les données Room importées existantes
+sont conservées, avec formulaires de sauvegarde explicite, inventaires et
+transactions d'affectation. Voir [parcours, protections, tests et limites](docs/STEP_03_IMPLEMENTATION.md).
+Les ventes/restaurations restent hors périmètre ; les archives sont en lecture seule.
