@@ -5,7 +5,7 @@ const usages=['À définir','Roulant','Non roulant','Exposition uniquement'];
 const K='rc-garage-db';
 let db;try{db=JSON.parse(localStorage.getItem(K))||{models:seed,gear:[]}}catch{db={models:seed,gear:[]}}
 if(!Array.isArray(db.models)||!Array.isArray(db.gear))db={models:seed,gear:[]};
-function migrateBodies(){if(!Array.isArray(db.bodyStock))db.bodyStock=[];db.models.forEach(m=>{if(!Array.isArray(m.bodies))m.bodies=[];if(!Array.isArray(m.bodyIds))m.bodyIds=[];for(const b of m.bodies){const v=typeof b==='string'?{name:b}:b;if(!v||!Object.values(v).some(Boolean))continue;const id='legacy-body-'+m.id+'-'+db.bodyStock.length;db.bodyStock.push({id,name:v.name||'',brand:v.brand||'',reference:v.reference||'',decoration:v.decoration||'',condition:v.condition||'',photo:v.photo||'',compatible:v.compatible||'',modelId:m.id});m.bodyIds.push(id)}m.bodies=[];if(!m.boxBody)m.boxBody={enabled:false,brand:'',model:''}})}
+function migrateBodies(){if(!Array.isArray(db.bodyStock))db.bodyStock=[];db.models.forEach(m=>{if(!Array.isArray(m.bodies))m.bodies=[];if(!Array.isArray(m.bodyIds))m.bodyIds=[];for(const b of m.bodies){const v=typeof b==='string'?{name:b}:b;if(!v||!Object.values(v).some(Boolean))continue;const id='legacy-body-'+m.id+'-'+db.bodyStock.length;db.bodyStock.push({id,name:v.name||'',brand:v.brand||'',reference:v.reference||'',decoration:v.decoration||'',condition:v.condition||'',photo:v.photo||'',compatible:v.compatible||'',modelId:m.id});m.bodyIds.push(id)}m.bodies=[];if(!m.boxBody)m.boxBody={enabled:true,brand:'',model:m.model||''}})}
 migrateBodies();
 db.models.forEach(m=>{if(!Array.isArray(m.bodies))m.bodies=[];if(!m.usage)m.usage='À définir';if(m.memory==null)m.memory=''});
 db.gear.forEach(g=>{if(g.type==='Récepteur'&&!g.radioId)g.radioId='';if(!g.inventoryId)g.inventoryId=''});
@@ -47,7 +47,7 @@ editing=id;const x=(tab==='models'?db.models:tab==='gear'?db.gear:db.bodyStock).
 $('heading').textContent=id?'Modifier une fiche':'Ajouter une fiche';let h='';
 if(tab==='models'){
 for(const [k,l] of [['brand','Marque'],['model','Nom du modèle'],['chassis','Référence du châssis']])h+=field(k,l,x[k]);
-h+='<div style="grid-column:1/-1"><strong>Carrosseries du châssis</strong><label style="display:block;margin:10px 0"><input type="checkbox" id="f-boxEnabled" '+(x.boxBody?.enabled?'checked':'')+'> Carrosserie de boîte (non comptée dans le stock)</label><div class="fields">'+field('boxBrand','Marque carrosserie de boîte',x.boxBody?.brand||'')+field('boxModel','Modèle carrosserie de boîte',x.boxBody?.model||'')+'</div><div id="bodyLinks">'+(x.bodyIds||[]).map(b=>bodySelectRow(b,x)).join('')+'</div><button type="button" id="addBodyLink">+ Associer une carrosserie du stock</button></div>';
+h+='<div style="grid-column:1/-1"><strong>Carrosseries du châssis</strong><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0"><label style="display:flex;align-items:center;gap:7px"><input type="checkbox" id="f-boxEnabled" '+(x.boxBody?.enabled!==false?'checked':'')+'> Du kit</label><label style="flex:1;min-width:160px">Modèle<input id="f-boxModel" value="'+e(x.boxBody?.model??x.model??'')+'"></label></div><div id="bodyLinks">'+(x.bodyIds||[]).map(b=>bodySelectRow(b,x)).join('')+'</div><button type="button" id="addBodyLink">+ Associer une carrosserie du stock</button></div>';
 h+=field('status','État du projet',x.status||'Monté',statuses.map(v=>[v,v]));
 h+=field('usage','Utilisation',x.usage||'À définir',usages.map(v=>[v,v]));
 for(const [k,l,t] of [['radio','Radio / émetteur','Radio'],['receiver','Récepteur physique','Récepteur'],['esc','ESC','ESC'],['motor','Moteur','Moteur']]){
@@ -75,7 +75,7 @@ const keys=tab==='models'?['brand','model','chassis','status','usage','radio','r
 let x={id:editing||'id'+Date.now()+Math.random().toString(36).slice(2)};keys.forEach(k=>x[k]=$('f-'+k).value.trim());
 if(tab==='models'){
 if(!x.brand||!x.model)return $('error').textContent='Marque et modèle requis.';
-x.boxBody={enabled:$('f-boxEnabled').checked,brand:$('f-boxBrand').value.trim(),model:$('f-boxModel').value.trim()};
+x.boxBody={enabled:$('f-boxEnabled').checked,brand:'',model:$('f-boxModel').value.trim()};
 x.bodyIds=Array.from(document.querySelectorAll('.bodyLink select')).map(el=>el.value).filter(Boolean);
 if(new Set(x.bodyIds).size!==x.bodyIds.length)return $('error').textContent='Une carrosserie ne peut être ajoutée deux fois sur le même modèle.';
 for(const bid of x.bodyIds){const b=db.bodyStock.find(z=>z.id===bid);if(!b)return $('error').textContent='Carrosserie introuvable.';if(b.modelId&&b.modelId!==x.id){const from=bodyOwner(b);if(!confirm('La carrosserie « '+bodyName(b)+' » est déjà liée à '+(from?from.brand+' '+from.model:'un autre châssis')+'. Confirmer son transfert vers '+x.brand+' '+x.model+' ?'))return}}
